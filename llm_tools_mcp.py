@@ -1,13 +1,16 @@
+from contextlib import asynccontextmanager
 import llm
 import mcp
 
 import asyncio
 
-
+from mcp.client.streamable_http import streamablehttp_client
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Optional, Union
+from pydantic import Discriminator
 import llm
 import json
+
 from mcp import (
     ClientSession,
     ListToolsResult,
@@ -17,16 +20,26 @@ from mcp import (
 )
 from pydantic import BaseModel, Field
 
+def get_discriminator_value(v: dict) -> str:
+    if "url" in v:
+        return "sse"
+    else:
+        return "stdio"
+    
 
-class ServerConfig(BaseModel):
+
+class StdioServerConfig(BaseModel):
     command: str = Field()
     args: Optional[List[str]] = Field(default=None)
     env: Optional[Dict[str, str]] = Field(default=None)
 
+class SseServerConfig(BaseModel):
+    url: str = Field()
+
+StdioOrSseServerConfig = Annotated[Union[StdioServerConfig, SseServerConfig], Discriminator(get_discriminator_value)]
 
 class McpConfigType(BaseModel):
-    mcpServers: Dict[str, ServerConfig]
-
+    mcpServers: Dict[str, StdioOrSseServerConfig]
 
 class McpConfig:
     def __init__(self, path="~/.llm-tools-mcp/mcp.json"):
@@ -45,23 +58,33 @@ class McpClient:
     def __init__(self, config: McpConfig):
         self.config = config
 
-    def server_params_for(self, name: str):
+    async def get_tools_for(self, name: str) -> ListToolsResult:
+        async with self._client_session(name) as session:
+            return await session.list_tools()
+
+    @asynccontextmanager
+    async def _client_session(self, name: str):
         server_config = self.config.get().mcpServers.get(name)
         if not server_config:
             raise ValueError(f"There is no such MCP server: {name}")
-        return StdioServerParameters(
-            command=server_config.command,
-            args=server_config.args or [],
-            env=server_config.env,
-        )
+        if isinstance(server_config, SseServerConfig):
+            async with streamablehttp_client(server_config.url) as (read, write, _):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    yield session
+        elif isinstance(server_config, StdioServerConfig):
+            params = StdioServerParameters(
+                command=server_config.command,
+                args=server_config.args or [],
+                env=server_config.env,
+            )
+            async with stdio_client(params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    yield session
+        else:
+            raise ValueError(f"Unknown server config type: {type(server_config)}")
 
-    async def get_tools_for(self, name: str) -> ListToolsResult:
-        params = self.server_params_for(name)
-        async with stdio_client(params) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-
-                return await session.list_tools()
 
     async def get_all_tools(self) -> Dict[str, List[Tool]]:
         out: Dict[str, List[Tool]] = dict()
@@ -71,13 +94,9 @@ class McpClient:
         return out
 
     async def call_tool(self, server_name: str, name: str, **kwargs):
-        params = self.server_params_for(server_name)
-        async with stdio_client(params) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-
-                returned = await session.call_tool(name, kwargs)
-                return returned.content
+        async with self._client_session(server_name) as session:
+            returned = await session.call_tool(name, kwargs)
+            return returned.content
 
 
 def create_tool_for_mcp(
