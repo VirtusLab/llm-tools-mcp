@@ -48,7 +48,7 @@ class McpConfigType(BaseModel):
 
 
 class McpConfig:
-    def __init__(self, path: str="~/.llm-tools-mcp/mcp.json"):
+    def __init__(self, path: str = "~/.llm-tools-mcp/mcp.json"):
         config_file_path = Path(path).expanduser()
         with open(config_file_path) as config_file:
             unparsed_config = config_file.read()
