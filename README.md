@@ -5,9 +5,9 @@
 > Only alpha version was released for now.
 
 [![PyPI](https://img.shields.io/pypi/v/llm-tools-mcp.svg)](https://pypi.org/project/llm-tools-mcp/)
-[![Changelog](https://img.shields.io/github/v/release/myhau/llm-tools-mcp?include_prereleases&label=changelog)](https://github.com/myhau/llm-tools-mcp/releases)
-[![Tests](https://github.com/myhau/llm-tools-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/myhau/llm-tools-mcp/actions/workflows/test.yml)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/myhau/llm-tools-mcp/blob/main/LICENSE)
+[![Changelog](https://img.shields.io/github/v/release/VirtusLab/llm-tools-mcp?include_prereleases&label=changelog)](https://github.com/VirtusLab/llm-tools-mcp/releases)
+[![Tests](https://github.com/VirtusLab/llm-tools-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/VirtusLab/llm-tools-mcp/actions/workflows/test.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/VirtusLab/llm-tools-mcp/blob/main/LICENSE)
 
 MCP support for LLM CLI tool.
 
