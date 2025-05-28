@@ -1,6 +1,6 @@
 [project]
 name = "llm-tools-mcp"
-version = "0.1.0a4"
+version = "0.1.0a5"
 description = "MCP support for LLM CLI"
 readme = "README.md"
 authors = [{name = "Michal Fudala"}]
