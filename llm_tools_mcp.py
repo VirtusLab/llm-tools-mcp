@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 import asyncio
+import datetime
+import uuid
 import llm
 import mcp
 from mcp.client.streamable_http import streamablehttp_client
 from pathlib import Path
-from typing import Annotated, Dict, List, Optional, Union
+from typing import Annotated, Dict, List, Optional, TextIO, Union
 from pydantic import Discriminator, BaseModel, Field, Tag
 import json
 
@@ -54,6 +56,7 @@ class McpConfig:
             unparsed_config = config_file.read()
             config = json.loads(unparsed_config)
 
+            self.config_path = config_file_path
             self.config: McpConfigType = McpConfigType(**config)
 
     def get(self) -> McpConfigType:
@@ -78,14 +81,20 @@ class McpClient:
             params = StdioServerParameters(
                 command=server_config.command,
                 args=server_config.args or [],
-                env=server_config.env,
+                env=server_config.env
             )
-            async with stdio_client(params) as (read, write):
+            log_file = self._log_file_for_session(name)
+            async with stdio_client(params, errlog=log_file) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     yield session
         else:
             raise ValueError(f"Unknown server config type: {type(server_config)}")
+
+    def _log_file_for_session(self, name: str) -> TextIO:
+        log_file = self.config.config_path.parent / "logs" / f"{name}-{uuid.uuid4()}-{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        return open(log_file, "w")
 
     async def get_tools_for(self, name: str) -> ListToolsResult:
         async with self._client_session(name) as session:
