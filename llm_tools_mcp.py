@@ -5,6 +5,7 @@ import uuid
 import llm
 import mcp
 from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.sse import sse_client
 from pathlib import Path
 from typing import Annotated, Dict, List, Optional, TextIO, Union
 from pydantic import Discriminator, BaseModel, Field, Tag
@@ -20,10 +21,22 @@ from mcp import (
 
 
 def get_discriminator_value(v: dict) -> str:
-    if "url" in v:
-        return "sse"
+    if "type" in v:
+        if isinstance(v["type"], str):
+            if v["type"] in ["stdio", "sse", "http"]:
+                return v["type"]
+            else:
+                raise ValueError(f"Unknown server type: {v['type']}")
+        else:
+            raise ValueError(f"Unknown server type: {type(v['type'])}")
+
     else:
-        return "stdio"
+        if "url" in v:
+            return "sse"
+        elif "command" in v:
+            return "stdio"
+        else:
+            raise ValueError(f"Unknown server config: {v}")
 
 
 class StdioServerConfig(BaseModel):
@@ -36,9 +49,14 @@ class SseServerConfig(BaseModel):
     url: str = Field()
 
 
+class HttpServerConfig(BaseModel):
+    url: str = Field()
+
+
 StdioOrSseServerConfig = Annotated[
     Union[
         Annotated[StdioServerConfig, Tag("stdio")],
+        Annotated[HttpServerConfig, Tag("http")],
         Annotated[SseServerConfig, Tag("sse")],
     ],
     Discriminator(get_discriminator_value),
@@ -73,6 +91,11 @@ class McpClient:
         if not server_config:
             raise ValueError(f"There is no such MCP server: {name}")
         if isinstance(server_config, SseServerConfig):
+            async with sse_client(server_config.url) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    yield session
+        elif isinstance(server_config, HttpServerConfig):
             async with streamablehttp_client(server_config.url) as (read, write, _):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
@@ -81,7 +104,7 @@ class McpClient:
             params = StdioServerParameters(
                 command=server_config.command,
                 args=server_config.args or [],
-                env=server_config.env
+                env=server_config.env,
             )
             log_file = self._log_file_for_session(name)
             async with stdio_client(params, errlog=log_file) as (read, write):
@@ -92,7 +115,11 @@ class McpClient:
             raise ValueError(f"Unknown server config type: {type(server_config)}")
 
     def _log_file_for_session(self, name: str) -> TextIO:
-        log_file = self.config.config_path.parent / "logs" / f"{name}-{uuid.uuid4()}-{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
+        log_file = (
+            self.config.config_path.parent
+            / "logs"
+            / f"{name}-{uuid.uuid4()}-{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
+        )
         log_file.parent.mkdir(parents=True, exist_ok=True)
         return open(log_file, "w")
 

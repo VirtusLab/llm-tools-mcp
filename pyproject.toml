@@ -10,6 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "llm",
     "mcp[cli]>=1.9.1",
+    "requests>=2.32.3",
 ]
 
 [build-system]
@@ -32,4 +33,4 @@ CI = "https://github.com/VirtusLab/llm-tools-mcp/actions"
 mcp = "llm_tools_mcp"
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "pytest-asyncio"]

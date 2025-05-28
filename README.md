@@ -19,9 +19,15 @@ MCP support for the LLM CLI tool.
 
 - [x] Release alpha version
 - [ ] Build a solid test suite
-- [ ] Redirect `stdout`/`stderr` from the MCP SDK to a file or designated location
+  - [x] test sse with dummy server
+  - [ ] test stdio with dummy server
+  - [x] test http streamable with dummy server ([see #1](https://github.com/Virtuslab/llm-tools-mcp/issues/1))
+  - [ ] test sse with real server
+  - [x] test stdio with real server
+  - [ ] test http streamable with real server
+- [x] Redirect `stdout`/`stderr` from the MCP SDK to a file or designated location
 - [ ] Reuse stdio connections
-- [ ] **Support non-stdio MCP servers**
+- [x] **Support non-stdio MCP servers**
 - [ ] Handle tool name conflicts (prefix with mcp server name?)
 - [ ] Gather feedback on the `~/.llm-tools-mcp` directory naming
 - [ ] Improve failure handling:
