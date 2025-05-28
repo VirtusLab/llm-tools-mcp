@@ -59,9 +59,9 @@ def test_integration():
             # Basic assertions
             assert len(all_tools) > 0, "Should have at least one server"
             assert "filesystem" in all_tools, "Should have filesystem server"
-            assert (
-                len(all_tools["filesystem"]) > 0
-            ), "Filesystem server should have tools"
+            assert len(all_tools["filesystem"]) > 0, (
+                "Filesystem server should have tools"
+            )
 
             # Verify we can list tools from filesystem server
             filesystem_tools = all_tools["filesystem"]
@@ -72,9 +72,9 @@ def test_integration():
             found_expected = [tool for tool in expected_tools if tool in tool_names]
 
             print(f"Found expected tools: {found_expected}")
-            assert (
-                len(found_expected) > 0
-            ), f"Should find at least one expected tool from {expected_tools}"
+            assert len(found_expected) > 0, (
+                f"Should find at least one expected tool from {expected_tools}"
+            )
 
         finally:
             # Clean up the temporary config file

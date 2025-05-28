@@ -20,12 +20,12 @@ from mcp import (
 )
 from pydantic import BaseModel, Field
 
+
 def get_discriminator_value(v: dict) -> str:
     if "url" in v:
         return "sse"
     else:
         return "stdio"
-    
 
 
 class StdioServerConfig(BaseModel):
@@ -33,13 +33,19 @@ class StdioServerConfig(BaseModel):
     args: Optional[List[str]] = Field(default=None)
     env: Optional[Dict[str, str]] = Field(default=None)
 
+
 class SseServerConfig(BaseModel):
     url: str = Field()
 
-StdioOrSseServerConfig = Annotated[Union[StdioServerConfig, SseServerConfig], Discriminator(get_discriminator_value)]
+
+StdioOrSseServerConfig = Annotated[
+    Union[StdioServerConfig, SseServerConfig], Discriminator(get_discriminator_value)
+]
+
 
 class McpConfigType(BaseModel):
     mcpServers: Dict[str, StdioOrSseServerConfig]
+
 
 class McpConfig:
     def __init__(self, path="~/.llm-tools-mcp/mcp.json"):
@@ -84,7 +90,6 @@ class McpClient:
                     yield session
         else:
             raise ValueError(f"Unknown server config type: {type(server_config)}")
-
 
     async def get_all_tools(self) -> Dict[str, List[Tool]]:
         out: Dict[str, List[Tool]] = dict()
