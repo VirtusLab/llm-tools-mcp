@@ -22,6 +22,7 @@ MCP support for the LLM CLI tool.
 - [ ] Redirect `stdout`/`stderr` from the MCP SDK to a file or designated location
 - [ ] Reuse stdio connections
 - [ ] **Support non-stdio MCP servers**
+- [ ] Handle tool name conflicts (prefix with mcp server name?)
 - [ ] Gather feedback on the `~/.llm-tools-mcp` directory naming
 - [ ] Improve failure handling:
   - [ ] When connecting to an MCP server fails
@@ -48,7 +49,16 @@ llm install llm-tools-mcp
 2. Run `llm`, for example:
     `llm --ta -T read_file -T list_allowed_directories -T list_directory "what files are in the demo directory? show me contents of one of the files (any)"`
 
+
 ## Development
+
+### Now (to be verified)
+
+- Sync dependencies: `uv sync --all-extras`
+- Run linters / type checker: `./check.sh`
+- Run tests: `./test.sh`
+
+### Before
 
 To set up this plugin locally, first checkout the code. Then create a new virtual environment:
 ```bash

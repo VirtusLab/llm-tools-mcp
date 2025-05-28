@@ -16,6 +16,12 @@ dependencies = [
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.11.11",
+]
+
 [project.urls]
 Homepage = "https://github.com/VirtusLab/llm-tools-mcp"
 Changelog = "https://github.com/VirtusLab/llm-tools-mcp/releases"

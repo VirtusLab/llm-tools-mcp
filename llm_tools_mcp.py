@@ -1,14 +1,11 @@
 from contextlib import asynccontextmanager
+import asyncio
 import llm
 import mcp
-
-import asyncio
-
 from mcp.client.streamable_http import streamablehttp_client
 from pathlib import Path
 from typing import Annotated, Dict, List, Optional, Union
-from pydantic import Discriminator
-import llm
+from pydantic import Discriminator, BaseModel, Field, Tag
 import json
 
 from mcp import (
@@ -18,7 +15,6 @@ from mcp import (
     stdio_client,
     Tool,
 )
-from pydantic import BaseModel, Field
 
 
 def get_discriminator_value(v: dict) -> str:
@@ -39,7 +35,11 @@ class SseServerConfig(BaseModel):
 
 
 StdioOrSseServerConfig = Annotated[
-    Union[StdioServerConfig, SseServerConfig], Discriminator(get_discriminator_value)
+    Union[
+        Annotated[StdioServerConfig, Tag("stdio")],
+        Annotated[SseServerConfig, Tag("sse")],
+    ],
+    Discriminator(get_discriminator_value),
 ]
 
 
@@ -64,10 +64,6 @@ class McpClient:
     def __init__(self, config: McpConfig):
         self.config = config
 
-    async def get_tools_for(self, name: str) -> ListToolsResult:
-        async with self._client_session(name) as session:
-            return await session.list_tools()
-
     @asynccontextmanager
     async def _client_session(self, name: str):
         server_config = self.config.get().mcpServers.get(name)
@@ -91,9 +87,13 @@ class McpClient:
         else:
             raise ValueError(f"Unknown server config type: {type(server_config)}")
 
+    async def get_tools_for(self, name: str) -> ListToolsResult:
+        async with self._client_session(name) as session:
+            return await session.list_tools()
+
     async def get_all_tools(self) -> Dict[str, List[Tool]]:
         out: Dict[str, List[Tool]] = dict()
-        for server_name, server_config in self.config.get().mcpServers.items():
+        for server_name in self.config.get().mcpServers.keys():
             tools = await self.get_tools_for(server_name)
             out[server_name] = tools.tools
         return out
