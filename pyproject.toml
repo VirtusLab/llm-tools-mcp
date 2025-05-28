@@ -23,6 +23,9 @@ dev = [
     "ruff>=0.11.11",
 ]
 
+[tool.uv.sources]
+llm = { git = "https://github.com/myhau/llm", rev = "base-toolbox-issue-1111" }
+
 [project.urls]
 Homepage = "https://github.com/VirtusLab/llm-tools-mcp"
 Changelog = "https://github.com/VirtusLab/llm-tools-mcp/releases"

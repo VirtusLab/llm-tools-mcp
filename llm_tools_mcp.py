@@ -154,6 +154,17 @@ def create_tool_for_mcp(
         implementation=impl,
     )
 
+class McpToolbox(llm.BaseToolbox):
+    def __init__(self, path: str = "~/.llm-tools-mcp/mcp.json"):
+        self.mcp_config = McpConfig(path)
+        self.mcp_client = McpClient(self.mcp_config)
+
+    def method_tools(self):
+        for server_name, tools in asyncio.run(self.mcp_client.get_all_tools()).items():
+            for tool in tools:
+                yield create_tool_for_mcp(server_name, self.mcp_client, tool)
+
+
 
 @llm.hookimpl
 def register_tools(register):
@@ -162,3 +173,4 @@ def register_tools(register):
     for server_name, tools in asyncio.run(mcp_client.get_all_tools()).items():
         for tool in tools:
             register(create_tool_for_mcp(server_name, mcp_client, tool))
+    register(McpToolbox)

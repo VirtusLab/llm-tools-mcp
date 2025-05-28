@@ -298,7 +298,7 @@ wheels = [
 [[package]]
 name = "llm"
 version = "0.26"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/myhau/llm?rev=base-toolbox-issue-1111#f8e2cae0d45884ee50ae9ec23a9a3592c66b04bd" }
 dependencies = [
     { name = "click" },
     { name = "click-default-group" },
@@ -315,14 +315,10 @@ dependencies = [
     { name = "sqlite-migrate" },
     { name = "sqlite-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/88/1acdae8cc6122d3ab2d3d30477d3273608f92177a6bb17ab98881af65627/llm-0.26.tar.gz", hash = "sha256:c2e9ddbc582da10c61112c0f983383fa0dc7bee3ca7d6f2ade1a2d003771eb1b", size = 82037, upload-time = "2025-05-27T20:36:22.891Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/5f/ed9d5c47c46632f2c3a844c14412f434bc1263faa4890306b5f911cd3aaf/llm-0.26-py3-none-any.whl", hash = "sha256:93dc331facbfb909f946df8812fb1d627ec9ce764aab2ebd29f9011ed647339c", size = 79376, upload-time = "2025-05-27T20:36:21.341Z" },
-]
 
 [[package]]
 name = "llm-tools-mcp"
-version = "0.1.0a4"
+version = "0.1.0a5"
 source = { editable = "." }
 dependencies = [
     { name = "llm" },
@@ -344,7 +340,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llm" },
+    { name = "llm", git = "https://github.com/myhau/llm?rev=base-toolbox-issue-1111" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.9.1" },
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytest-asyncio", marker = "extra == 'test'" },
