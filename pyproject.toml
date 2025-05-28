@@ -1,6 +1,6 @@
 [project]
 name = "llm-tools-mcp"
-version = "0.1.0a2"
+version = "0.1.0a3"
 description = "MCP support for LLM CLI"
 readme = "README.md"
 authors = [{name = "Michal Fudala"}]
@@ -17,10 +17,10 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project.urls]
-Homepage = "https://github.com/myhau/llm-tools-mcp"
-Changelog = "https://github.com/myhau/llm-tools-mcp/releases"
-Issues = "https://github.com/myhau/llm-tools-mcp/issues"
-CI = "https://github.com/myhau/llm-tools-mcp/actions"
+Homepage = "https://github.com/VirtusLab/llm-tools-mcp"
+Changelog = "https://github.com/VirtusLab/llm-tools-mcp/releases"
+Issues = "https://github.com/VirtusLab/llm-tools-mcp/issues"
+CI = "https://github.com/VirtusLab/llm-tools-mcp/actions"
 
 [project.entry-points.llm]
 mcp = "llm_tools_mcp"
