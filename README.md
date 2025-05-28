@@ -1,41 +1,52 @@
 # llm-tools-mcp
 
 > [!WARNING]
-> Work in progress!
-> Only alpha version was released for now.
+> **Work in progress!**  
+> Only an alpha version has been released so far.  
+> **Please refrain from using it unless you know what you're doing.**  
+> If you *do* decide to try it, make sure to use the `--ta` flag (manual approval required for every tool execution).
 
 [![PyPI](https://img.shields.io/pypi/v/llm-tools-mcp.svg)](https://pypi.org/project/llm-tools-mcp/)
 [![Changelog](https://img.shields.io/github/v/release/VirtusLab/llm-tools-mcp?include_prereleases&label=changelog)](https://github.com/VirtusLab/llm-tools-mcp/releases)
 [![Tests](https://github.com/VirtusLab/llm-tools-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/VirtusLab/llm-tools-mcp/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/VirtusLab/llm-tools-mcp/blob/main/LICENSE)
 
-MCP support for LLM CLI tool.
+MCP support for the LLM CLI tool.
 
-<img src="./demo.svg">
+<img src="./demo.svg" alt="Demo" />
 
-## To do
+## To Do
 
 - [x] Release alpha version
-- [ ] Good test suite
-- [ ] Redirect stdout/stderr from mcp sdk to file or some proper location
-- [ ] Reuse stdio connections?
-- [ ] Support non-stdio MCP servers
-- [ ] Get feedback on `~/.llm-tools-mcp` directory name
-- [ ] Better failure handling
-    - [ ] When connection to MCP server fails
-    - [ ] When `mcp.json` is invalid
-- [ ] Better README.md
-    - [ ] [Development](#development) section should mention uv (?)
+- [ ] Build a solid test suite
+- [ ] Redirect `stdout`/`stderr` from the MCP SDK to a file or designated location
+- [ ] Reuse stdio connections
+- [ ] **Support non-stdio MCP servers**
+- [ ] Gather feedback on the `~/.llm-tools-mcp` directory naming
+- [ ] Improve failure handling:
+  - [ ] When connecting to an MCP server fails
+  - [ ] When `mcp.json` is malformed
+- [ ] Improve this README:
+  - [ ] Add more detail in the [Development](#development) section (mention `uv`?)
 
 ## Installation
 
-Install this plugin in the same environment as [LLM](https://llm.datasette.io/).
+Install this plugin in the same environment as [LLM](https://llm.datasette.io/):
+
 ```bash
 llm install llm-tools-mcp
 ```
 ## Usage
 
-Usage instructions go here.
+> [!WARNING]
+> **Work in progress!**  
+> Only an alpha version has been released so far.  
+> **Please refrain from using it unless you know what you're doing.**  
+> If you *do* decide to try it, make sure to use the `--ta` flag (manual approval required for every tool execution).
+
+1. Create `mcp.json` file in `~/.llm-tols-mcp`
+2. Run `llm`, for example:
+    `llm --ta -T read_file -T list_allowed_directories -T list_directory "what files are in the demo directory? show me contents of one of the files (any)"`
 
 ## Development
 
