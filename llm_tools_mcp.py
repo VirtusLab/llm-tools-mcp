@@ -8,7 +8,13 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import llm
 import json
-from mcp import ClientSession, ListToolsResult, StdioServerParameters, stdio_client, Tool
+from mcp import (
+    ClientSession,
+    ListToolsResult,
+    StdioServerParameters,
+    stdio_client,
+    Tool,
+)
 from pydantic import BaseModel, Field
 
 
@@ -23,7 +29,7 @@ class McpConfigType(BaseModel):
 
 
 class McpConfig:
-    def __init__(self, path = "~/.llm-tools-mcp/mcp.json"):
+    def __init__(self, path="~/.llm-tools-mcp/mcp.json"):
         config_file_path = Path(path).expanduser()
         with open(config_file_path) as config_file:
             unparsed_config = config_file.read()
@@ -48,15 +54,7 @@ class McpClient:
             args=server_config.args or [],
             env=server_config.env,
         )
-    def server_params_for_tool(self, name: str):
-        server_config = self.config.get().mcpServers.get(name)
-        if not server_config:
-            raise ValueError(f"There is no such tool server: {name}")
-        return StdioServerParameters(
-            command=server_config.command,
-            args=server_config.args or [],
-            env=server_config.env,
-        )
+
     async def get_tools_for(self, name: str) -> ListToolsResult:
         params = self.server_params_for(name)
         async with stdio_client(params) as (read, write):
@@ -67,7 +65,7 @@ class McpClient:
 
     async def get_all_tools(self) -> Dict[str, List[Tool]]:
         out: Dict[str, List[Tool]] = dict()
-        for (server_name, server_config) in self.config.get().mcpServers.items():
+        for server_name, server_config in self.config.get().mcpServers.items():
             tools = await self.get_tools_for(server_name)
             out[server_name] = tools.tools
         return out
@@ -81,15 +79,19 @@ class McpClient:
                 returned = await session.call_tool(name, kwargs)
                 return returned.content
 
-def create_tool_for_mcp(server_name: str, mcp_client: McpClient, mcp_tool: mcp.Tool) -> llm.Tool:
+
+def create_tool_for_mcp(
+    server_name: str, mcp_client: McpClient, mcp_tool: mcp.Tool
+) -> llm.Tool:
     def impl(**kwargs):
         return asyncio.run(mcp_client.call_tool(server_name, mcp_tool.name, **kwargs))
+
     return llm.Tool(
         name=mcp_tool.name,
         description=mcp_tool.description,
         input_schema=mcp_tool.inputSchema,
         plugin="llm-tools-mcp",
-        implementation=impl
+        implementation=impl,
     )
 
 
@@ -97,6 +99,6 @@ def create_tool_for_mcp(server_name: str, mcp_client: McpClient, mcp_tool: mcp.T
 def register_tools(register):
     mcp_config = McpConfig()
     mcp_client = McpClient(mcp_config)
-    for (server_name, tools) in asyncio.run(mcp_client.get_all_tools()).items():
+    for server_name, tools in asyncio.run(mcp_client.get_all_tools()).items():
         for tool in tools:
             register(create_tool_for_mcp(server_name, mcp_client, tool))
