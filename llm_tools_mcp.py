@@ -23,7 +23,9 @@ from mcp import (
 )
 
 
-DEFAULT_CONFIG_PATH = "~/.llm-tools-mcp/mcp.json"
+DEFAULT_CONFIG_PATH = os.path.join(
+    os.environ.get("LLM_TOOLS_MCP_CONFIG_DIR", "~/.llm-tools-mcp"), "mcp.json"
+)
 
 
 def get_discriminator_value(v: dict) -> str:
