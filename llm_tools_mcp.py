@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 import asyncio
 import datetime
+import os
+import traceback
 import uuid
 import llm
 import mcp
@@ -10,6 +12,7 @@ from pathlib import Path
 from typing import Annotated, Dict, List, Optional, TextIO, Union
 from pydantic import Discriminator, BaseModel, Field, Tag
 import json
+import sys
 
 from mcp import (
     ClientSession,
@@ -24,8 +27,6 @@ DEFAULT_CONFIG_PATH = "~/.llm-tools-mcp/mcp.json"
 
 
 def get_discriminator_value(v: dict) -> str:
-    print("SUTTTF")
-    print(v)
     if "type" in v:
         type_value = v["type"]
         if isinstance(type_value, str):
@@ -121,19 +122,30 @@ class McpClient:
         self.config = config
 
     @asynccontextmanager
+    async def _client_session_with_logging(self, name, read, write):
+        async with ClientSession(read, write) as session:
+            try:
+                await session.initialize()
+                yield session
+            except Exception as e:
+                print(f"Warning: Failed to connect to the '{name}' MCP server: {e}", file=sys.stderr)
+                print(f"Tools from '{name}' will be unavailable (run with LLM_TOOLS_MCP_FULL_ERRORS=1) or see logs: {self.config.log_path}", file=sys.stderr)
+                if os.environ.get("LLM_TOOLS_MCP_FULL_ERRORS", None): 
+                    print(traceback.format_exc(), file=sys.stderr)
+                yield None
+
+    @asynccontextmanager
     async def _client_session(self, name: str):
         server_config = self.config.get().mcpServers.get(name)
         if not server_config:
             raise ValueError(f"There is no such MCP server: {name}")
         if isinstance(server_config, SseServerConfig):
             async with sse_client(server_config.url) as (read, write):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
+                async with self._client_session_with_logging(name, read, write) as session:
                     yield session
         elif isinstance(server_config, HttpServerConfig):
             async with streamablehttp_client(server_config.url) as (read, write, _):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
+                async with self._client_session_with_logging(name, read, write) as session:
                     yield session
         elif isinstance(server_config, StdioServerConfig):
             params = StdioServerParameters(
@@ -143,8 +155,7 @@ class McpClient:
             )
             log_file = self._log_file_for_session(name)
             async with stdio_client(params, errlog=log_file) as (read, write):
-                async with ClientSession(read, write) as session:
-                    await session.initialize()
+                async with self._client_session_with_logging(name, read, write) as session:
                     yield session
         else:
             raise ValueError(f"Unknown server config type: {type(server_config)}")
@@ -160,6 +171,8 @@ class McpClient:
 
     async def get_tools_for(self, name: str) -> ListToolsResult:
         async with self._client_session(name) as session:
+            if session is None:
+                return ListToolsResult(tools=[])
             return await session.list_tools()
 
     async def get_all_tools(self) -> Dict[str, List[Tool]]:
@@ -171,8 +184,10 @@ class McpClient:
 
     async def call_tool(self, server_name: str, name: str, **kwargs):
         async with self._client_session(server_name) as session:
+            if session is None:
+                return f"Error: Failed to call tool {name} from MCP server {server_name}"
             returned = await session.call_tool(name, kwargs)
-            return returned.content
+            return str(returned.content)
 
 
 def create_tool_for_mcp(
