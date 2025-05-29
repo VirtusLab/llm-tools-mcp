@@ -1,8 +1,8 @@
 import socket
-import tempfile
 import json
 import asyncio
 from pathlib import Path
+from typing import List, TypedDict
 import pytest
 
 from llm_tools_mcp import McpConfig, McpClient
@@ -14,6 +14,120 @@ def get_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("", 0))
         return s.getsockname()[1]
+
+
+class JsonValidationTestCase(TypedDict):
+    input_json: str
+    expected_error_contains: List[str]
+
+
+json_validation_test_data: List[JsonValidationTestCase] = [
+    {
+        "input_json": """
+        {
+            "invalid": "asd"
+        }
+        """,
+        "expected_error_contains": ["mcpServers", "Field required"],
+    },
+    {
+        "input_json": """
+        []
+        """,
+        "expected_error_contains": ["Input should be an object"],
+    },
+    {
+        "input_json": """
+        {
+            "mcpServers": []
+        }
+        """,
+        "expected_error_contains": [
+            "mcpServers",
+            "Input should be an object",
+        ],
+    },
+    {
+        "input_json": """
+        {
+            "mcpServers": {
+                "name": {
+                    "unknown": "a"
+                }
+            }
+        }
+        """,
+        "expected_error_contains": ["Could not deduce MCP server type"],
+    },
+    {
+        "input_json": """
+        {
+            "mcpServers": {
+                "name": {
+                    "command": "whatever",
+                    "url": "https://url"
+                }
+            }
+        }
+        """,
+        "expected_error_contains": [
+            "Only 'url' or 'command' is allowed",
+            "whatever",
+            "https://url",
+        ],
+    },
+    {
+        "input_json": """
+        {
+            "mcpServers": {
+                "name": {
+                    "command": "whatever",
+                    "type": "sse"
+                }
+            }
+        }
+        """,
+        "expected_error_contains": ["Field required"],
+    },
+    {
+        "input_json": """
+        {
+            "mcpServers": {
+                "name": {
+                    "command": "whatever",
+                    "type": "invalid"
+                }
+            }
+        }
+        """,
+        "expected_error_contains": ["Unknown server 'type'", "invalid"],
+    },
+    {
+        "input_json": """
+        {
+            "mcpServers": {
+                "name": {
+                    "command": "whatever",
+                    "url": "https://url"
+                }
+            }
+        }
+        """,
+        "expected_error_contains": [
+            "Only 'url' or 'command' is allowed",
+            "whatever",
+            "https://url",
+        ],
+    },
+]
+
+
+@pytest.mark.parametrize("test_case", json_validation_test_data)
+def test_mcp_json_validation(test_case):
+    with pytest.raises(ValueError) as excinfo:
+        McpConfig.for_json_content(test_case["input_json"])
+    for expected_error in test_case["expected_error_contains"]:
+        assert expected_error in str(excinfo.value)
 
 
 @pytest.mark.asyncio
@@ -37,24 +151,16 @@ async def test_sse():
     await asyncio.sleep(2)
 
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as config_file:
-            mcp_config = {
-                "mcpServers": {
-                    "test_sse_server": {"url": f"http://localhost:{port}/sse"}
-                }
-            }
+        mcp_config_content = json.dumps(
+            {"mcpServers": {"test_sse_server": {"url": f"http://localhost:{port}/sse"}}}
+        )
 
-            json.dump(mcp_config, config_file, indent=2)
-            config_file_path = config_file.name
-
-        mcp_config_obj = McpConfig(path=config_file_path)
+        mcp_config_obj = McpConfig.for_json_content(mcp_config_content)
         mcp_client = McpClient(mcp_config_obj)
 
         all_tools = await mcp_client.get_all_tools()
 
-        print(f"Found {len(all_tools)} server(s):")
+        print(f"Found {len(all_tools)} seruur(s):")
         for server_name, tools in all_tools.items():
             print(f"  Server '{server_name}' has {len(tools)} tools:")
             for tool in tools:
@@ -101,10 +207,8 @@ async def test_stdio():
         test_file1.write_text("This is test file 1")
         test_file2.write_text("This is test file 2")
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as config_file:
-            mcp_config = {
+        mcp_config_content = json.dumps(
+            {
                 "mcpServers": {
                     "filesystem": {
                         "command": "npx",
@@ -116,11 +220,9 @@ async def test_stdio():
                     }
                 }
             }
+        )
 
-            json.dump(mcp_config, config_file, indent=2)
-            config_file_path = config_file.name
-
-        mcp_config_obj = McpConfig(path=config_file_path)
+        mcp_config_obj = McpConfig.for_json_content(mcp_config_content)
         mcp_client = McpClient(mcp_config_obj)
 
         all_tools = await mcp_client.get_all_tools()
@@ -192,10 +294,8 @@ async def test_http():
     await asyncio.sleep(2)
 
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as config_file:
-            mcp_config = {
+        mcp_config_content = json.dumps(
+            {
                 "mcpServers": {
                     "test_http_server": {
                         "type": "http",
@@ -203,11 +303,9 @@ async def test_http():
                     }
                 }
             }
+        )
 
-            json.dump(mcp_config, config_file, indent=2)
-            config_file_path = config_file.name
-
-        mcp_config_obj = McpConfig(path=config_file_path)
+        mcp_config_obj = McpConfig.for_json_content(mcp_config_content)
         mcp_client = McpClient(mcp_config_obj)
 
         print("About to get all tools")

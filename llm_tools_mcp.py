@@ -22,21 +22,33 @@ from mcp import (
 
 def get_discriminator_value(v: dict) -> str:
     if "type" in v:
-        if isinstance(v["type"], str):
-            if v["type"] in ["stdio", "sse", "http"]:
-                return v["type"]
+        type_value = v["type"]
+        if isinstance(type_value, str):
+            allowed_types = ["stdio", "sse", "http"]
+            if type_value in allowed_types:
+                return type_value
             else:
-                raise ValueError(f"Unknown server type: {v['type']}")
+                raise ValueError(
+                    f"Unknown server 'type'. Provided 'type': ${type_value}. Allowed types: ${allowed_types}"
+                )
         else:
-            raise ValueError(f"Unknown server type: {type(v['type'])}")
+            raise ValueError(
+                f"Server 'type' should be string. Provided 'type': {type_value}"
+            )
 
     else:
+        if "url" in v and "command" in v:
+            raise ValueError(
+                f"Only 'url' or 'command' is allowed, not both. Provided 'url': {v['url']}, provided 'command': {v['command']}"
+            )
         if "url" in v:
             return "sse"
         elif "command" in v:
             return "stdio"
         else:
-            raise ValueError(f"Unknown server config: {v}")
+            raise ValueError(
+                "Could not deduce MCP server type. Provide 'url' or 'command'. You can explicitly specify the type with 'type' field."
+            )
 
 
 class StdioServerConfig(BaseModel):
@@ -68,24 +80,26 @@ class McpConfigType(BaseModel):
 
 
 class McpConfig:
-    def __init__(self, config: McpConfigType, log_path: str = "~/.llm-tools-mcp/logs"):
+    def __init__(
+        self, config: McpConfigType, log_path: Path = Path("~/.llm-tools-mcp/logs")
+    ):
         self.config = config
-        self.log_path = log_path
-    
-    @classmethod 
-    def for_file_path(cls, path: str):
+        self.log_path = log_path.expanduser()
+
+    @classmethod
+    def for_file_path(cls, path: str = "~/.llm-tools-mcp/mcp.json"):
         config_file_path = Path(path).expanduser()
         with open(config_file_path) as config_file:
             return cls.for_json_content(config_file.read())
-            
 
     @classmethod
     def for_json_content(cls, content: str):
+        McpConfigType.model_validate_json(content)
         config = json.loads(content)
         config_validated: McpConfigType = McpConfigType(**config)
         return cls(config_validated)
 
-    def with_log_path(self, log_path: str):
+    def with_log_path(self, log_path: Path):
         return McpConfig(self.config, log_path)
 
     def get(self) -> McpConfigType:
@@ -127,7 +141,7 @@ class McpClient:
 
     def _log_file_for_session(self, name: str) -> TextIO:
         log_file = (
-            self.config.config_path.parent
+            self.config.log_path.parent
             / "logs"
             / f"{name}-{uuid.uuid4()}-{datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.log"
         )
@@ -168,7 +182,7 @@ def create_tool_for_mcp(
 
 @llm.hookimpl
 def register_tools(register):
-    mcp_config = McpConfig()
+    mcp_config = McpConfig.for_file_path()
     mcp_client = McpClient(mcp_config)
     for server_name, tools in asyncio.run(mcp_client.get_all_tools()).items():
         for tool in tools:
