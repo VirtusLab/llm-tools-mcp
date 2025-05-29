@@ -328,7 +328,7 @@ wheels = [
 
 [[package]]
 name = "llm-tools-mcp"
-version = "0.1.0a6"
+version = "0.1"
 source = { editable = "." }
 dependencies = [
     { name = "llm" },

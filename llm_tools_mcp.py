@@ -244,5 +244,4 @@ def register_tools(register):
             tools = compute_tools()
             return get_tools_for_llm_introspection(tools) if tools else []
 
-
     register(MCP)
