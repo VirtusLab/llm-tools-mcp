@@ -4,7 +4,7 @@
 
 ![mcp-logo](https://github.com/user-attachments/assets/3e0e9850-6faf-439b-96c2-b672341c1ca5)
 
-**Connect to MCP servers right from your shell using [llm](https://github.com/simonw/llm) (by [@simonw](https://github.com/simonw)).**
+**Connect to MCP servers right from your shell. Plugin for [llm](https://github.com/simonw/llm) (by [@simonw](https://github.com/simonw)).**
 
 
 [![PyPI](https://img.shields.io/pypi/v/llm-tools-mcp.svg)](https://pypi.org/project/llm-tools-mcp/)
