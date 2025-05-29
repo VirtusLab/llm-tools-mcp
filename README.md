@@ -106,8 +106,8 @@ python -m pytest
 - [x] **Support non-stdio MCP servers**
 - [ ] Handle tool name conflicts (prefix with mcp server name?)
 - [ ] Gather feedback on the `~/.llm-tools-mcp` directory naming
-- [ ] Improve failure handling:
-  - [ ] When connecting to an MCP server fails
-  - [ ] When `mcp.json` is malformed
+- [x] Improve failure handling:
+  - [x] When connecting to an MCP server fails
+  - [x] When `mcp.json` is malformed
 - [ ] Improve this README:
   - [ ] Add more detail in the [Development](#development) section (mention `uv`?)
