@@ -26,3 +26,6 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest
+    - name: Run online tests
+      run: |
+        python -m pytest -m "online"

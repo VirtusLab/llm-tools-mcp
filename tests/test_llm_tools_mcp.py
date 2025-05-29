@@ -101,7 +101,7 @@ async def test_stdio():
                         "command": "npx",
                         "args": [
                             "-y",
-                            "@modelcontextprotocol/server-filesystem",
+                            "@modelcontextprotocol/server-filesystem@2025.3.28",  # version on purpose for determinism
                             str(test_dir),
                         ],
                     }

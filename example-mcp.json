@@ -7,6 +7,14 @@
         "@modelcontextprotocol/server-filesystem",
         "/Users/username/Desktop"
       ]
+    },
+    "fetch": {
+      "type": "http",
+      "url": "https://remote.mcpservers.org/fetch/mcp"
+    },
+    "deepwiki": {
+      "type": "sse",
+      "url": "https://mcp.deepwiki.com/sse"
     }
   }
 }
