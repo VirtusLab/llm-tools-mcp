@@ -68,14 +68,25 @@ class McpConfigType(BaseModel):
 
 
 class McpConfig:
-    def __init__(self, path: str = "~/.llm-tools-mcp/mcp.json"):
+    def __init__(self, config: McpConfigType, log_path: str = "~/.llm-tools-mcp/logs"):
+        self.config = config
+        self.log_path = log_path
+    
+    @classmethod 
+    def for_file_path(cls, path: str):
         config_file_path = Path(path).expanduser()
         with open(config_file_path) as config_file:
-            unparsed_config = config_file.read()
-            config = json.loads(unparsed_config)
+            return cls.for_json_content(config_file.read())
+            
 
-            self.config_path = config_file_path
-            self.config: McpConfigType = McpConfigType(**config)
+    @classmethod
+    def for_json_content(cls, content: str):
+        config = json.loads(content)
+        config_validated: McpConfigType = McpConfigType(**config)
+        return cls(config_validated)
+
+    def with_log_path(self, log_path: str):
+        return McpConfig(self.config, log_path)
 
     def get(self) -> McpConfigType:
         return self.config

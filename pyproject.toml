@@ -33,4 +33,8 @@ CI = "https://github.com/VirtusLab/llm-tools-mcp/actions"
 mcp = "llm_tools_mcp"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-asyncio"]
+test = [
+    "pytest",
+ "pytest-asyncio",
+ "pytest-watch>=4.2.0",
+]
