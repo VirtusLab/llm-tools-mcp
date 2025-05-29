@@ -24,6 +24,8 @@ DEFAULT_CONFIG_PATH = "~/.llm-tools-mcp/mcp.json"
 
 
 def get_discriminator_value(v: dict) -> str:
+    print("SUTTTF")
+    print(v)
     if "type" in v:
         type_value = v["type"]
         if isinstance(type_value, str):
@@ -44,8 +46,13 @@ def get_discriminator_value(v: dict) -> str:
             raise ValueError(
                 f"Only 'url' or 'command' is allowed, not both. Provided 'url': {v['url']}, provided 'command': {v['command']}"
             )
-        if "url" in v:
-            return "sse"
+        elif "url" in v:
+            # inference rules kinda like in FastMCP 2.x
+            # https://gofastmcp.com/clients/transports#overview
+            if "/sse" in v["url"]:
+                return "sse"
+            else:
+                return "http"
         elif "command" in v:
             return "stdio"
         else:
