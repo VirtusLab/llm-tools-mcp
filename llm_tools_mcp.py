@@ -20,6 +20,9 @@ from mcp import (
 )
 
 
+DEFAULT_CONFIG_PATH = "~/.llm-tools-mcp/mcp.json"
+
+
 def get_discriminator_value(v: dict) -> str:
     if "type" in v:
         type_value = v["type"]
@@ -87,7 +90,7 @@ class McpConfig:
         self.log_path = log_path.expanduser()
 
     @classmethod
-    def for_file_path(cls, path: str = "~/.llm-tools-mcp/mcp.json"):
+    def for_file_path(cls, path: str = DEFAULT_CONFIG_PATH):
         config_file_path = Path(path).expanduser()
         with open(config_file_path) as config_file:
             return cls.for_json_content(config_file.read())
@@ -173,7 +176,7 @@ def create_tool_for_mcp(
 
     enriched_description = mcp_tool.description
     if enriched_description is not None:
-        enriched_description += f" (from MCP server: {server_name})"
+        enriched_description += f"\n from MCP server: {server_name}"
 
     return llm.Tool(
         name=mcp_tool.name,
@@ -184,10 +187,62 @@ def create_tool_for_mcp(
     )
 
 
+def create_tool_for_mcp_introspection(tool: llm.Tool) -> dict:
+    return {
+        "name": tool.name,
+        "description": tool.description,
+        "arguments": tool.input_schema,
+        "implementation": lambda: "dummy",
+    }
+
+
+def get_tools_for_llm(mcp_client: McpClient) -> List[llm.Tool]:
+    tools = asyncio.run(mcp_client.get_all_tools())
+    mapped_tools: List[llm.Tool] = []
+    for server_name, server_tools in tools.items():
+        for tool in server_tools:
+            mapped_tools.append(create_tool_for_mcp(server_name, mcp_client, tool))
+    return mapped_tools
+
+
+def get_tools_for_llm_introspection(tools: List[llm.Tool]) -> List[dict]:
+    return [create_tool_for_mcp_introspection(tool) for tool in tools]
+
+
 @llm.hookimpl
 def register_tools(register):
-    mcp_config = McpConfig.for_file_path()
-    mcp_client = McpClient(mcp_config)
-    for server_name, tools in asyncio.run(mcp_client.get_all_tools()).items():
-        for tool in tools:
-            register(create_tool_for_mcp(server_name, mcp_client, tool))
+    mcp_config: Optional[McpConfig] = None
+    mcp_client: Optional[McpClient] = None
+    tools: Optional[List[llm.Tool]] = None
+
+    def compute_tools(config_path: str = DEFAULT_CONFIG_PATH) -> List[llm.Tool]:
+        nonlocal tools
+        nonlocal mcp_config
+        nonlocal mcp_client
+        previous_config = mcp_config.get() if mcp_config else None
+        new_mcp_config = McpConfig.for_file_path(config_path)
+        new_mcp_client = McpClient(new_mcp_config)
+        if previous_config is None or new_mcp_config.get() != previous_config:
+            tools = get_tools_for_llm(new_mcp_client)
+            mcp_client = new_mcp_client
+            mcp_config = new_mcp_config
+        else:
+            if tools is None:
+                tools = get_tools_for_llm(new_mcp_client)
+        return tools
+
+    class MCP(llm.Toolbox):
+        def __init__(self, config_path: str = DEFAULT_CONFIG_PATH):
+            self.config_path = config_path
+
+        def method_tools(self):
+            tools = compute_tools(self.config_path)
+            yield from iter(tools) if tools else iter([])
+
+        @classmethod
+        def introspect_methods(cls):
+            tools = compute_tools()
+            return get_tools_for_llm_introspection(tools) if tools else []
+
+
+    register(MCP)
