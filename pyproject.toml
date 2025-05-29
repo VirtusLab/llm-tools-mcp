@@ -35,6 +35,6 @@ mcp = "llm_tools_mcp"
 [project.optional-dependencies]
 test = [
     "pytest",
- "pytest-asyncio",
+ "pytest-asyncio>=1.0.0",
  "pytest-watch>=4.2.0",
 ]

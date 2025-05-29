@@ -171,9 +171,13 @@ def create_tool_for_mcp(
     def impl(**kwargs):
         return asyncio.run(mcp_client.call_tool(server_name, mcp_tool.name, **kwargs))
 
+    enriched_description = mcp_tool.description
+    if enriched_description is not None:
+        enriched_description += f" (from MCP server: {server_name})"
+
     return llm.Tool(
         name=mcp_tool.name,
-        description=mcp_tool.description,
+        description=enriched_description,
         input_schema=mcp_tool.inputSchema,
         plugin="llm-tools-mcp",
         implementation=impl,
