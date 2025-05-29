@@ -22,12 +22,23 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: pip
         cache-dependency-path: pyproject.toml
-    - name: Install dependencies
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+    - name: Sync dependencies
       run: |
-        pip install -e '.[test]'
+        uv sync --all-extras
+    - name: Check (lint)
+      run: |
+        ./check.sh
     - name: Run tests
       run: |
-        python -m pytest
+        uv run pytest
+    - name: Run online tests
+      run: |
+        uv run pytest -m "online"
+    - name: Run e2e tests
+      run: |
+        ./e2e.sh
   deploy:
     runs-on: ubuntu-latest
     needs: [test]
