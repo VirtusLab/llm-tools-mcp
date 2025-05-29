@@ -10,7 +10,7 @@
 
 MCP support for the LLM CLI tool.
 
-<img src="./demo.svg" alt="Demo" />
+![demo-long](https://github.com/user-attachments/assets/82ae287f-9e69-4f9c-a26c-49f4f2fd6771)
 
 
 ## Installation
