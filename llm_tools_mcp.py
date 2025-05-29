@@ -128,9 +128,15 @@ class McpClient:
                 await session.initialize()
                 yield session
             except Exception as e:
-                print(f"Warning: Failed to connect to the '{name}' MCP server: {e}", file=sys.stderr)
-                print(f"Tools from '{name}' will be unavailable (run with LLM_TOOLS_MCP_FULL_ERRORS=1) or see logs: {self.config.log_path}", file=sys.stderr)
-                if os.environ.get("LLM_TOOLS_MCP_FULL_ERRORS", None): 
+                print(
+                    f"Warning: Failed to connect to the '{name}' MCP server: {e}",
+                    file=sys.stderr,
+                )
+                print(
+                    f"Tools from '{name}' will be unavailable (run with LLM_TOOLS_MCP_FULL_ERRORS=1) or see logs: {self.config.log_path}",
+                    file=sys.stderr,
+                )
+                if os.environ.get("LLM_TOOLS_MCP_FULL_ERRORS", None):
                     print(traceback.format_exc(), file=sys.stderr)
                 yield None
 
@@ -141,11 +147,15 @@ class McpClient:
             raise ValueError(f"There is no such MCP server: {name}")
         if isinstance(server_config, SseServerConfig):
             async with sse_client(server_config.url) as (read, write):
-                async with self._client_session_with_logging(name, read, write) as session:
+                async with self._client_session_with_logging(
+                    name, read, write
+                ) as session:
                     yield session
         elif isinstance(server_config, HttpServerConfig):
             async with streamablehttp_client(server_config.url) as (read, write, _):
-                async with self._client_session_with_logging(name, read, write) as session:
+                async with self._client_session_with_logging(
+                    name, read, write
+                ) as session:
                     yield session
         elif isinstance(server_config, StdioServerConfig):
             params = StdioServerParameters(
@@ -155,7 +165,9 @@ class McpClient:
             )
             log_file = self._log_file_for_session(name)
             async with stdio_client(params, errlog=log_file) as (read, write):
-                async with self._client_session_with_logging(name, read, write) as session:
+                async with self._client_session_with_logging(
+                    name, read, write
+                ) as session:
                     yield session
         else:
             raise ValueError(f"Unknown server config type: {type(server_config)}")
@@ -185,7 +197,9 @@ class McpClient:
     async def call_tool(self, server_name: str, name: str, **kwargs):
         async with self._client_session(server_name) as session:
             if session is None:
-                return f"Error: Failed to call tool {name} from MCP server {server_name}"
+                return (
+                    f"Error: Failed to call tool {name} from MCP server {server_name}"
+                )
             tool_result = await session.call_tool(name, kwargs)
             return str(tool_result.content)
 
