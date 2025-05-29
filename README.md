@@ -22,21 +22,44 @@ llm install llm-tools-mcp
 > [!WARNING]
 > It's recommended to use the `--ta` flag and approve each tool execution.
 
-1. Create `mcp.json` file in `~/.llm-tools-mcp`
-2. List available tools: `llm tools list`
-3. Run `llm`, for example:
-    `llm --ta -T MCP "what files are in the demo directory? show me contents of one of the files (any)"`
+1. Create `mcp.json` file in `~/.llm-tools-mcp`.
 
+   Example file:
+
+   ```json
+   {
+     "mcpServers": {
+       "filesystem": {
+         "command": "npx",
+         "args": [
+           "-y",
+           "@modelcontextprotocol/server-filesystem",
+           "~/demo"
+         ]
+       }
+     }
+   }
+   ```
+    
+2. List available tools.
+
+   ```sh
+   llm tools list
+   ```
+
+3. Run `llm` with tools.
+
+   ```sh
+   llm --ta -T MCP "what files are in the demo directory? show me contents of one of the files (any)"
+   ```
 
 ### Other examples
 
 **Dynamically change your MCP config:**
 
-```bash
+```sh
 llm --ta -T 'MCP("/path/to/custom/mcp.json")' "your prompt here"
 ```
-
-
 
 ## Development
 
