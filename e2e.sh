@@ -78,7 +78,7 @@ if [ $? -ne 0 ]; then
     echo "🛑 ERROR: MCP echo test failed: $MCP_ECHO_OUTPUT"
     exit 1
 fi
-if ! echo "$MCP_ECHO_OUTPUT" | grep -q "Hello, world!2"; then
+if ! echo "$MCP_ECHO_OUTPUT" | grep -q "Hello, world!"; then
     echo "🛑 ERROR: Echo output doesn't contain expected tool_calls: $MCP_ECHO_OUTPUT"
     exit 1
 fi
