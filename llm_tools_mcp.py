@@ -23,9 +23,8 @@ from mcp import (
 )
 
 
-DEFAULT_CONFIG_PATH = os.path.join(
-    os.environ.get("LLM_TOOLS_MCP_CONFIG_DIR", "~/.llm-tools-mcp"), "mcp.json"
-)
+DEFAULT_CONFIG_DIR = os.environ.get("LLM_TOOLS_MCP_CONFIG_DIR", "~/.llm-tools-mcp")
+DEFAULT_MCP_JSON_PATH = os.path.join(DEFAULT_CONFIG_DIR, "mcp.json")
 
 
 def get_discriminator_value(v: dict) -> str:
@@ -94,13 +93,15 @@ class McpConfigType(BaseModel):
 
 class McpConfig:
     def __init__(
-        self, config: McpConfigType, log_path: Path = Path("~/.llm-tools-mcp/logs")
+        self,
+        config: McpConfigType,
+        log_path: Path = Path(DEFAULT_CONFIG_DIR) / Path("logs"),
     ):
         self.config = config
         self.log_path = log_path.expanduser()
 
     @classmethod
-    def for_file_path(cls, path: str = DEFAULT_CONFIG_PATH):
+    def for_file_path(cls, path: str = DEFAULT_MCP_JSON_PATH):
         config_file_path = Path(path).expanduser()
         with open(config_file_path) as config_file:
             return cls.for_json_content(config_file.read())
@@ -252,7 +253,7 @@ def register_tools(register):
     mcp_client: Optional[McpClient] = None
     tools: Optional[List[llm.Tool]] = None
 
-    def compute_tools(config_path: str = DEFAULT_CONFIG_PATH) -> List[llm.Tool]:
+    def compute_tools(config_path: str = DEFAULT_MCP_JSON_PATH) -> List[llm.Tool]:
         nonlocal tools
         nonlocal mcp_config
         nonlocal mcp_client
@@ -269,7 +270,7 @@ def register_tools(register):
         return tools
 
     class MCP(llm.Toolbox):
-        def __init__(self, config_path: str = DEFAULT_CONFIG_PATH):
+        def __init__(self, config_path: str = DEFAULT_MCP_JSON_PATH):
             self.config_path = config_path
 
         def method_tools(self):
