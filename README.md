@@ -1,16 +1,26 @@
-# llm-tools-mcp
+<div align="center">
+   
+# `llm-tools-mcp`
 
-> [!Note]
-> Current focus: [Authorization #4](https://github.com/VirtusLab/llm-tools-mcp/issues/4)
+![mcp-logo](https://github.com/user-attachments/assets/3e0e9850-6faf-439b-96c2-b672341c1ca5)
+
+**Connect to MCP servers right from your shell using [llm](https://github.com/simonw/llm) (by [@simonw](https://github.com/simonw)).**
+
 
 [![PyPI](https://img.shields.io/pypi/v/llm-tools-mcp.svg)](https://pypi.org/project/llm-tools-mcp/)
 [![Changelog](https://img.shields.io/github/v/release/VirtusLab/llm-tools-mcp?include_prereleases&label=changelog)](https://github.com/VirtusLab/llm-tools-mcp/releases)
 [![Tests](https://github.com/VirtusLab/llm-tools-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/VirtusLab/llm-tools-mcp/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/VirtusLab/llm-tools-mcp/blob/main/LICENSE)
 
-MCP support for the LLM CLI tool.
+
 
 ![demo-long](https://github.com/user-attachments/assets/82ae287f-9e69-4f9c-a26c-49f4f2fd6771)
+
+</div>
+
+
+> [!Note]
+> Current focus: [Authorization #4](https://github.com/VirtusLab/llm-tools-mcp/issues/4)
 
 
 ## Installation
