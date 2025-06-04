@@ -9,7 +9,7 @@ import mcp
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.client.sse import sse_client
 from pathlib import Path
-from typing import Annotated, Dict, List, Optional, TextIO, Union
+from typing import Annotated, TextIO
 from pydantic import Discriminator, BaseModel, Field, Tag
 import json
 import sys
@@ -65,8 +65,8 @@ def get_discriminator_value(v: dict) -> str:
 
 class StdioServerConfig(BaseModel):
     command: str = Field()
-    args: Optional[List[str]] = Field(default=None)
-    env: Optional[Dict[str, str]] = Field(default=None)
+    args: list[str] | None = Field(default=None)
+    env: dict[str, str] | None = Field(default=None)
 
 
 class SseServerConfig(BaseModel):
@@ -78,17 +78,15 @@ class HttpServerConfig(BaseModel):
 
 
 StdioOrSseServerConfig = Annotated[
-    Union[
-        Annotated[StdioServerConfig, Tag("stdio")],
-        Annotated[HttpServerConfig, Tag("http")],
-        Annotated[SseServerConfig, Tag("sse")],
-    ],
+    Annotated[StdioServerConfig, Tag("stdio")]
+    | Annotated[HttpServerConfig, Tag("http")]
+    | Annotated[SseServerConfig, Tag("sse")],
     Discriminator(get_discriminator_value),
 ]
 
 
 class McpConfigType(BaseModel):
-    mcpServers: Dict[str, StdioOrSseServerConfig]
+    mcpServers: dict[str, StdioOrSseServerConfig]
 
 
 class McpConfig:
@@ -190,8 +188,8 @@ class McpClient:
                 return ListToolsResult(tools=[])
             return await session.list_tools()
 
-    async def get_all_tools(self) -> Dict[str, List[Tool]]:
-        tools_for_server: Dict[str, List[Tool]] = dict()
+    async def get_all_tools(self) -> dict[str, list[Tool]]:
+        tools_for_server: dict[str, list[Tool]] = dict()
         for server_name in self.config.get().mcpServers.keys():
             tools = await self.get_tools_for(server_name)
             tools_for_server[server_name] = tools.tools
@@ -234,26 +232,26 @@ def create_tool_for_mcp_introspection(tool: llm.Tool) -> dict:
     }
 
 
-def get_tools_for_llm(mcp_client: McpClient) -> List[llm.Tool]:
+def get_tools_for_llm(mcp_client: McpClient) -> list[llm.Tool]:
     tools = asyncio.run(mcp_client.get_all_tools())
-    mapped_tools: List[llm.Tool] = []
+    mapped_tools: list[llm.Tool] = []
     for server_name, server_tools in tools.items():
         for tool in server_tools:
             mapped_tools.append(create_tool_for_mcp(server_name, mcp_client, tool))
     return mapped_tools
 
 
-def get_tools_for_llm_introspection(tools: List[llm.Tool]) -> List[dict]:
+def get_tools_for_llm_introspection(tools: list[llm.Tool]) -> list[dict]:
     return [create_tool_for_mcp_introspection(tool) for tool in tools]
 
 
 @llm.hookimpl
 def register_tools(register):
-    mcp_config: Optional[McpConfig] = None
-    mcp_client: Optional[McpClient] = None
-    tools: Optional[List[llm.Tool]] = None
+    mcp_config: McpConfig | None = None
+    mcp_client: McpClient | None = None
+    tools: list[llm.Tool] | None = None
 
-    def compute_tools(config_path: str = DEFAULT_MCP_JSON_PATH) -> List[llm.Tool]:
+    def compute_tools(config_path: str = DEFAULT_MCP_JSON_PATH) -> list[llm.Tool]:
         nonlocal tools
         nonlocal mcp_config
         nonlocal mcp_client
