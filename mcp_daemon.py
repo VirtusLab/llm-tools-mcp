@@ -175,30 +175,31 @@ async def main():
     parser = argparse.ArgumentParser(description='MCP Daemon Server')
     parser.add_argument('--port', type=int, default=DEFAULT_PORT,
                        help=f'Port to listen on (default: {DEFAULT_PORT})')
-    parser.add_argument('--daemon', action='store_true',
-                       help='Run as daemon (fork to background)')
+    parser.add_argument('--log-file', type=str, default=None,
+                       help='Log file path (default: stdout)')
+    parser.add_argument('--log-level', type=str, default='INFO',
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       help='Log level (default: INFO)')
     args = parser.parse_args()
 
-    if args.daemon:
-        # Fork to background
-        pid = os.fork()
-        if pid > 0:
-            # Parent process exits
-            print(f"Daemon started with PID {pid}")
-            sys.exit(0)
+    # Configure logging level
+    logging.getLogger().setLevel(getattr(logging, args.log_level))
+    
+    # Redirect logging to file if specified
+    if args.log_file:
+        log_path = Path(args.log_file)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Child process continues
-        os.setsid()
-        os.chdir('/')
-        
-        # Redirect stdout/stderr to log file
-        log_dir = Path(DEFAULT_PIDFILE).parent / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / "daemon.log"
-        
-        with open(log_file, 'a') as f:
-            os.dup2(f.fileno(), sys.stdout.fileno())
-            os.dup2(f.fileno(), sys.stderr.fileno())
+        # Remove existing handlers and add file handler
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+            
+        file_handler = logging.FileHandler(log_path)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        ))
+        root_logger.addHandler(file_handler)
 
     server = McpDaemonServer(port=args.port)
     

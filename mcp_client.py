@@ -158,23 +158,49 @@ class DaemonManager:
             if not daemon_script.exists():
                 logger.error(f"Daemon script not found: {daemon_script}")
                 return False
-                
-            # Start daemon in background
-            subprocess.Popen([
-                sys.executable, str(daemon_script), "--daemon"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             
-            # Wait for daemon to start
+            # Set up log file for daemon
+            log_dir = Path(DEFAULT_PIDFILE).parent / "logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            log_file = log_dir / "daemon.log"
+            
+            # Start daemon as background process
+            with open(log_file, 'a') as log_handle:
+                process = subprocess.Popen([
+                    sys.executable, str(daemon_script),
+                    "--log-file", str(log_file)
+                ], 
+                stdout=log_handle,
+                stderr=log_handle,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True  # This detaches from the parent process
+                )
+                
+            logger.debug(f"Started daemon process with PID: {process.pid}")
+            
+            # Wait for daemon to start and write its PID file
             start_time = time.time()
             while time.time() - start_time < DAEMON_STARTUP_TIMEOUT:
                 if DaemonManager.is_daemon_running():
-                    # Give it a moment to fully initialize
+                    # Give it a moment to fully initialize the gRPC server
                     time.sleep(0.5)
                     logger.info("Daemon started successfully")
                     return True
                 time.sleep(0.1)
                 
             logger.error("Daemon failed to start within timeout")
+            
+            # Try to clean up the process if it's still running
+            try:
+                if process.poll() is None:  # Process is still running
+                    process.terminate()
+                    process.wait(timeout=5)
+            except (subprocess.TimeoutExpired, OSError):
+                try:
+                    process.kill()
+                except OSError:
+                    pass
+                    
             return False
             
         except Exception as e:
