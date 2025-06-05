@@ -22,6 +22,8 @@ from mcp import (
     Tool,
 )
 
+# Import the new client manager
+from mcp_client import McpClientManager
 
 DEFAULT_CONFIG_DIR = os.environ.get("LLM_TOOLS_MCP_CONFIG_DIR", "~/.llm-tools-mcp")
 DEFAULT_MCP_JSON_PATH = os.path.join(DEFAULT_CONFIG_DIR, "mcp.json")
@@ -120,6 +122,7 @@ class McpConfig:
         return self.config
 
 
+# Legacy McpClient class is kept for compatibility but no longer used
 class McpClient:
     def __init__(self, config: McpConfig):
         self.config = config
@@ -208,18 +211,18 @@ class McpClient:
 
 
 def create_tool_for_mcp(
-    server_name: str, mcp_client: McpClient, mcp_tool: mcp.Tool
+    server_name: str, client_manager: McpClientManager, tool_dict: dict
 ) -> llm.Tool:
     def impl(**kwargs):
-        return asyncio.run(mcp_client.call_tool(server_name, mcp_tool.name, **kwargs))
+        return asyncio.run(client_manager.call_tool(server_name, tool_dict['name'], **kwargs))
 
-    enriched_description = mcp_tool.description or ""
+    enriched_description = tool_dict.get('description', '')
     enriched_description += f"\n[from MCP server: {server_name}]"
 
     return llm.Tool(
-        name=mcp_tool.name,
+        name=tool_dict['name'],
         description=enriched_description,
-        input_schema=mcp_tool.inputSchema,
+        input_schema=tool_dict.get('input_schema', {}),
         plugin="llm-tools-mcp",
         implementation=impl,
     )
@@ -234,12 +237,12 @@ def create_tool_for_mcp_introspection(tool: llm.Tool) -> dict:
     }
 
 
-def get_tools_for_llm(mcp_client: McpClient) -> List[llm.Tool]:
-    tools = asyncio.run(mcp_client.get_all_tools())
+def get_tools_for_llm(client_manager: McpClientManager) -> List[llm.Tool]:
+    tools_dict = asyncio.run(client_manager.get_all_tools())
     mapped_tools: List[llm.Tool] = []
-    for server_name, server_tools in tools.items():
-        for tool in server_tools:
-            mapped_tools.append(create_tool_for_mcp(server_name, mcp_client, tool))
+    for server_name, server_tools in tools_dict.items():
+        for tool_dict in server_tools:
+            mapped_tools.append(create_tool_for_mcp(server_name, client_manager, tool_dict))
     return mapped_tools
 
 
@@ -249,24 +252,34 @@ def get_tools_for_llm_introspection(tools: List[llm.Tool]) -> List[dict]:
 
 @llm.hookimpl
 def register_tools(register):
-    mcp_config: Optional[McpConfig] = None
-    mcp_client: Optional[McpClient] = None
+    client_manager: Optional[McpClientManager] = None
     tools: Optional[List[llm.Tool]] = None
+    current_config_path: Optional[str] = None
 
     def compute_tools(config_path: str = DEFAULT_MCP_JSON_PATH) -> List[llm.Tool]:
         nonlocal tools
-        nonlocal mcp_config
-        nonlocal mcp_client
-        previous_config = mcp_config.get() if mcp_config else None
-        new_mcp_config = McpConfig.for_file_path(config_path)
-        new_mcp_client = McpClient(new_mcp_config)
-        if previous_config is None or new_mcp_config.get() != previous_config:
-            tools = get_tools_for_llm(new_mcp_client)
-            mcp_client = new_mcp_client
-            mcp_config = new_mcp_config
-        else:
-            if tools is None:
-                tools = get_tools_for_llm(new_mcp_client)
+        nonlocal client_manager
+        nonlocal current_config_path
+        
+        # Only recreate client manager if config path changed or doesn't exist
+        if current_config_path != config_path or client_manager is None:
+            if client_manager:
+                # Clean up previous client manager
+                asyncio.run(client_manager.cleanup())
+            
+            client_manager = McpClientManager(config_path)
+            current_config_path = config_path
+            tools = None  # Reset tools cache
+        
+        if tools is None:
+            try:
+                tools = get_tools_for_llm(client_manager)
+            except Exception as e:
+                print(f"Warning: Failed to get tools from MCP daemon: {e}", file=sys.stderr)
+                if os.environ.get("LLM_TOOLS_MCP_FULL_ERRORS", None):
+                    print(traceback.format_exc(), file=sys.stderr)
+                tools = []
+        
         return tools
 
     class MCP(llm.Toolbox):

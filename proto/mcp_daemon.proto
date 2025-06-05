@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package mcp_daemon;
+
+// Request to get all tools from all MCP servers
+message GetAllToolsRequest {
+  string config_path = 1;
+}
+
+// Response containing all tools from all servers
+message GetAllToolsResponse {
+  map<string, ToolList> tools_by_server = 1;
+}
+
+// List of tools for a server
+message ToolList {
+  repeated Tool tools = 1;
+}
+
+// Tool definition
+message Tool {
+  string name = 1;
+  string description = 2;
+  string input_schema = 3; // JSON string
+}
+
+// Request to call a tool
+message CallToolRequest {
+  string config_path = 1;
+  string server_name = 2;
+  string tool_name = 3;
+  string arguments = 4; // JSON string
+}
+
+// Response from calling a tool
+message CallToolResponse {
+  string result = 1;
+  bool success = 2;
+  string error = 3;
+}
+
+// Health check request
+message HealthRequest {}
+
+// Health check response
+message HealthResponse {
+  bool healthy = 1;
+  string version = 2;
+}
+
+// The MCP Daemon service
+service McpDaemon {
+  // Get all available tools from all MCP servers
+  rpc GetAllTools(GetAllToolsRequest) returns (GetAllToolsResponse);
+  
+  // Call a specific tool on a specific server
+  rpc CallTool(CallToolRequest) returns (CallToolResponse);
+  
+  // Health check to verify daemon is running
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
