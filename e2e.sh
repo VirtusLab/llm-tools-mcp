@@ -56,7 +56,7 @@ TOOLS_OUTPUT=$(llm tools list 2>&1 || true)
 if echo "$TOOLS_OUTPUT" | grep -q "read_file"; then
     echo "MCP tools are available"
 else
-    echo "🛑 ERROR: MCP are not available"
+    echo "🛑 ERROR: MCP tools are not available"
 fi
 
 SIMPLE_TEST='{"tool_calls": [{"name": "list_directory", "arguments": {"path": "'$TEST_DIR'"}}], "prompt": "List files in current directory"}'
