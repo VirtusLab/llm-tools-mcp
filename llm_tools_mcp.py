@@ -36,7 +36,7 @@ def get_discriminator_value(v: dict) -> str:
                 return type_value
             else:
                 raise ValueError(
-                    f"Unknown server 'type'. Provided 'type': ${type_value}. Allowed types: ${allowed_types}"
+                    f"Unknown server 'type'. Provided 'type': {type_value}. Allowed types: {allowed_types}"
                 )
         else:
             raise ValueError(
