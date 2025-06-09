@@ -95,3 +95,12 @@ async def test_remote_fetch_mcp():
     assert "fetch" in tool_names, (
         f"Should have a fetching tool. Found tools: {tool_names}"
     )
+
+    result = await mcp_client.call_tool(
+        "fetch",
+        "fetch",
+        url="https://example.com",
+    )
+
+    assert result is not None, "Tool call should return a result"
+    assert "Example Domain" in str(result)
