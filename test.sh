@@ -3,5 +3,5 @@
 set -uo pipefail  
 
 echo "--------------------------------"
-echo "Running mypy..."
+echo "Running tests..."
 uv run pytest
