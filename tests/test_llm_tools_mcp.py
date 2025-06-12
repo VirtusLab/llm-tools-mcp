@@ -9,7 +9,8 @@ import pytest
 import uvicorn
 from starlette.applications import Starlette
 
-from llm_tools_mcp import McpConfig, McpClient
+from llm_tools_mcp.mcp_client import McpClient
+from llm_tools_mcp.mcp_config import McpConfig
 
 from mcp.server.fastmcp import FastMCP, Context
 
