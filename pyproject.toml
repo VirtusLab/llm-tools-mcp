@@ -30,11 +30,11 @@ Issues = "https://github.com/VirtusLab/llm-tools-mcp/issues"
 CI = "https://github.com/VirtusLab/llm-tools-mcp/actions"
 
 [project.entry-points.llm]
-mcp = "llm_tools_mcp"
+mcp = "llm_tools_mcp.register_tools"
 
 [project.optional-dependencies]
 test = [
     "pytest",
- "pytest-asyncio>=1.0.0",
- "pytest-watch>=4.2.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-watch>=4.2.0",
 ]
