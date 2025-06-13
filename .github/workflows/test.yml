@@ -44,4 +44,4 @@ jobs:
         python -m pytest -m "online"
     - name: Run e2e tests
       run: |
-        ./e2e-docker.sh
+        ./e2e/e2e.sh
