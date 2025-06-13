@@ -21,6 +21,16 @@ from contextlib import asynccontextmanager
 from typing import TextIO
 
 
+@asynccontextmanager
+async def enrich_exceptions(**details):
+    try:
+        yield
+    except Exception as e:
+        raise Exception(
+            f"There was an error while handling (llm-tools-mcp plugin). Details: {details}"
+        ) from e
+
+
 class McpClient:
     def __init__(self, config: McpConfig):
         self.config = config
@@ -86,22 +96,25 @@ class McpClient:
         return open(log_file, "w")
 
     async def get_tools_for(self, name: str) -> ListToolsResult:
-        async with self._client_session(name) as session:
-            if session is None:
-                return ListToolsResult(tools=[])
-            return await session.list_tools()
+        async with enrich_exceptions(server_name=name):
+            async with self._client_session(name) as session:
+                if session is None:
+                    return ListToolsResult(tools=[])
+                return await session.list_tools()
 
     async def get_all_tools(self) -> dict[str, list[Tool]]:
         tools_for_server: dict[str, list[Tool]] = dict()
         for server_name in self.config.get().mcpServers.keys():
-            tools = await self.get_tools_for(server_name)
-            tools_for_server[server_name] = tools.tools
+            async with enrich_exceptions(server_name=server_name):
+                tools = await self.get_tools_for(server_name)
+                tools_for_server[server_name] = tools.tools
         return tools_for_server
 
     async def call_tool(self, server_name: str, name: str, **kwargs):
-        async with self._client_session(server_name) as session:
-            if session is None:
-                return (
+        async with enrich_exceptions(server_name=server_name, tool_name=name):
+            async with self._client_session(server_name) as session:
+                if session is None:
+                    return (
                     f"Error: Failed to call tool {name} from MCP server {server_name}"
                 )
             tool_result = await session.call_tool(name, kwargs)
