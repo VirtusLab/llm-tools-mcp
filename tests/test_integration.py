@@ -30,6 +30,7 @@ async def test_sse_deepwiki_mcp():
     )
     assert result is not None, "Tool call should return a result"
     assert "react" in str(result).lower(), "Available pages for facebook/react"
+    await mcp_client.close()
 
 
 @pytest.mark.asyncio
@@ -60,3 +61,4 @@ async def test_remote_fetch_mcp():
     assert "fetch" in tool_names, (
         f"Should have a fetching tool. Found tools: {tool_names}"
     )
+    await mcp_client.close()
