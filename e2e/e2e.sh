@@ -40,6 +40,7 @@ cat > "$MCP_CONFIG_DIR/mcp.json" << EOF
 EOF
 
 export LLM_TOOLS_MCP_CONFIG_DIR="$MCP_CONFIG_DIR"
+echo "Using config in $LLM_TOOLS_MCP_CONFIG_DIR"
 
 echo "Installing LLM and plugins..."
 if ! command -v uv &> /dev/null; then
@@ -48,7 +49,7 @@ if ! command -v uv &> /dev/null; then
 fi
 
 uv tool install llm
-llm install $SCRIPT_DIR
+llm install $SCRIPT_DIR/..
 llm install llm-echo==0.3a3
 
 

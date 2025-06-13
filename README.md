@@ -81,23 +81,7 @@ llm --ta -T 'MCP("/path/to/custom/mcp.json")' "your prompt here"
 - Sync dependencies: `uv sync --all-extras`
 - Run linters / type checker: `./check.sh`
 - Run tests: `./test.sh`
-
-### Before
-
-To set up this plugin locally, first checkout the code. Then create a new virtual environment:
-```bash
-cd llm-tools-mcp
-python -m venv venv
-source venv/bin/activate
-```
-Now install the dependencies and test dependencies:
-```bash
-python -m pip install -e '.[test]'
-```
-To run the tests:
-```bash
-python -m pytest
-```
+- Run end to end tests: `./e2e/e2e-docker.sh`
 
 ## To Do
 
