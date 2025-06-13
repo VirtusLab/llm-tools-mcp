@@ -98,7 +98,7 @@ class McpClient:
             tools_for_server[server_name] = tools.tools
         return tools_for_server
 
-    async def call_tool(self, server_name: str, name: str, **kwargs):
+    async def call_tool(self, server_name: str, name: str, /, **kwargs):
         async with self._client_session(server_name) as session:
             if session is None:
                 return (
