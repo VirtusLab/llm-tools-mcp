@@ -81,6 +81,7 @@ async def test_sse():
         assert result is not None, "Tool call should return a result"
         result_str = str(result)
         assert "Tool output" in result_str, "Should find completion message"
+        await mcp_client.close()
 
 
 @pytest.mark.asyncio
@@ -128,6 +129,7 @@ async def test_stdio():
         assert result is not None, "Tool call should return a result"
         result_str = str(result)
         assert "This is test file 1" in result_str, "Should find test file content"
+        await mcp_client.close()
 
     finally:
         import shutil
@@ -173,3 +175,4 @@ async def test_http():
         assert result is not None, "Tool call should return a result"
         result_str = str(result)
         assert "Tool output" in result_str, "Should find completion message"
+        await mcp_client.close()

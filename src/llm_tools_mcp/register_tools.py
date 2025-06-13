@@ -60,14 +60,15 @@ def register_tools(register):
         nonlocal mcp_client
         previous_config = mcp_config.get() if mcp_config else None
         new_mcp_config = McpConfig.for_file_path(config_path)
-        new_mcp_client = McpClient(new_mcp_config)
-        if previous_config is None or new_mcp_config.get() != previous_config:
-            tools = _get_tools_for_llm(new_mcp_client)
-            mcp_client = new_mcp_client
+        if mcp_client is None or new_mcp_config.get() != previous_config:
+            if mcp_client is not None:
+                asyncio.run(mcp_client.close())
+            mcp_client = McpClient(new_mcp_config)
             mcp_config = new_mcp_config
+            tools = _get_tools_for_llm(mcp_client)
         else:
             if tools is None:
-                tools = _get_tools_for_llm(new_mcp_client)
+                tools = _get_tools_for_llm(mcp_client)
         return tools
 
     class MCP(llm.Toolbox):
