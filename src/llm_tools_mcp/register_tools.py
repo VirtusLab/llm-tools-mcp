@@ -71,11 +71,10 @@ def register_tools(register):
         return tools
 
     class MCP(llm.Toolbox):
-        def __init__(self, config_path: str = DEFAULT_MCP_JSON_PATH):
-            self.config_path = config_path
 
-        def method_tools(self):
-            tools = compute_tools(self.config_path)
+        @classmethod
+        def method_tools(cls):
+            tools = compute_tools(DEFAULT_MCP_JSON_PATH)
             yield from iter(tools) if tools else iter([])
 
         @classmethod
