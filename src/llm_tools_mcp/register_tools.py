@@ -71,7 +71,6 @@ def register_tools(register):
         return tools
 
     class MCP(llm.Toolbox):
-
         @classmethod
         def method_tools(cls):
             tools = compute_tools(DEFAULT_MCP_JSON_PATH)
