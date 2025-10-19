@@ -63,9 +63,7 @@ def register_tools(register):
         """
 
         def __init__(self, config_path: str = DEFAULT_MCP_JSON_PATH):
-            self._prepare(config_path)
-
-        def _prepare(self, config_path: str):
+            super().__init__()
             computed_tools = compute_tools(config_path)
 
             for tool in computed_tools:
