@@ -26,15 +26,6 @@ def _create_tool_for_mcp(
     )
 
 
-def _create_tool_for_mcp_introspection(tool: llm.Tool) -> dict:
-    return {
-        "name": tool.name,
-        "description": tool.description,
-        "arguments": tool.input_schema,
-        "implementation": lambda: "dummy",
-    }
-
-
 def _get_tools_for_llm(mcp_client: McpClient) -> list[llm.Tool]:
     tools = asyncio.run(mcp_client.get_all_tools())
     mapped_tools: list[llm.Tool] = []
@@ -42,10 +33,6 @@ def _get_tools_for_llm(mcp_client: McpClient) -> list[llm.Tool]:
         for tool in server_tools:
             mapped_tools.append(_create_tool_for_mcp(server_name, mcp_client, tool))
     return mapped_tools
-
-
-def _get_tools_for_llm_introspection(tools: list[llm.Tool]) -> list[dict]:
-    return [_create_tool_for_mcp_introspection(tool) for tool in tools]
 
 
 @llm.hookimpl
@@ -71,16 +58,17 @@ def register_tools(register):
         return tools
 
     class MCP(llm.Toolbox):
+        """
+        A set of tools to work with obsidian.
+        """
+
         def __init__(self, config_path: str = DEFAULT_MCP_JSON_PATH):
-            self.config_path = config_path
+            self._prepare(config_path)
 
-        def method_tools(self):
-            tools = compute_tools(self.config_path)
-            yield from iter(tools) if tools else iter([])
+        def _prepare(self, config_path: str):
+            computed_tools = compute_tools(config_path)
 
-        @classmethod
-        def introspect_methods(cls):
-            tools = compute_tools()
-            return _get_tools_for_llm_introspection(tools) if tools else []
+            for tool in computed_tools:
+                self.add_tool(tool, pass_self=True)
 
     register(MCP)
