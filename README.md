@@ -55,6 +55,9 @@ llm install llm-tools-mcp
    ```
     
 2. List available tools.
+   > [!WARNING]
+   > `llm tools` is not implemented for dynamic toolboxes ([see this](https://github.com/simonw/llm/issues/1111#issuecomment-2992280193)), 
+   > so tools loaded as part of MCP won't be visible. 
 
    ```sh
    llm tools list

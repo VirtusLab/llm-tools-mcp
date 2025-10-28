@@ -1,7 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
 
-set -uo pipefail  
+set -uo pipefail
 
 echo "--------------------------------"
 echo "Running tests..."
-uv run pytest
+uv run --extra test pytest
