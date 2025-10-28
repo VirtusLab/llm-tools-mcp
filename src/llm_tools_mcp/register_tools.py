@@ -35,38 +35,16 @@ def _get_tools_for_llm(mcp_client: McpClient) -> list[llm.Tool]:
     return mapped_tools
 
 
+class MCP(llm.Toolbox):
+    def __init__(self, config_path: str = DEFAULT_MCP_JSON_PATH):
+        mcp_config = McpConfig.for_file_path(config_path)
+        mcp_client = McpClient(mcp_config)
+        computed_tools = _get_tools_for_llm(mcp_client)
+
+        for tool in computed_tools:
+            self.add_tool(tool, pass_self=True)
+
+
 @llm.hookimpl
 def register_tools(register):
-    mcp_config: McpConfig | None = None
-    mcp_client: McpClient | None = None
-    tools: list[llm.Tool] | None = None
-
-    def compute_tools(config_path: str = DEFAULT_MCP_JSON_PATH) -> list[llm.Tool]:
-        nonlocal tools
-        nonlocal mcp_config
-        nonlocal mcp_client
-        previous_config = mcp_config.get() if mcp_config else None
-        new_mcp_config = McpConfig.for_file_path(config_path)
-        new_mcp_client = McpClient(new_mcp_config)
-        if previous_config is None or new_mcp_config.get() != previous_config:
-            tools = _get_tools_for_llm(new_mcp_client)
-            mcp_client = new_mcp_client
-            mcp_config = new_mcp_config
-        else:
-            if tools is None:
-                tools = _get_tools_for_llm(new_mcp_client)
-        return tools
-
-    class MCP(llm.Toolbox):
-        """
-        A set of tools to work with obsidian.
-        """
-
-        def __init__(self, config_path: str = DEFAULT_MCP_JSON_PATH):
-            super().__init__()
-            computed_tools = compute_tools(config_path)
-
-            for tool in computed_tools:
-                self.add_tool(tool, pass_self=True)
-
     register(MCP)
