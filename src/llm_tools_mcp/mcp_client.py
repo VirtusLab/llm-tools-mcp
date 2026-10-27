@@ -30,7 +30,6 @@ class McpClient:
         async with ClientSession(read, write) as session:
             try:
                 await session.initialize()
-                yield session
             except Exception as e:
                 print(
                     f"Warning: Failed to connect to the '{name}' MCP server: {e}",
@@ -43,6 +42,8 @@ class McpClient:
                 if os.environ.get("LLM_TOOLS_MCP_FULL_ERRORS", None):
                     print(traceback.format_exc(), file=sys.stderr)
                 yield None
+            else:
+                yield session
 
     @asynccontextmanager
     async def _client_session(self, name: str):
